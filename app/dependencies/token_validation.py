@@ -2,14 +2,19 @@ from fastapi import Header, HTTPException, Depends
 import requests
 from app.core.config import settings
 
-async def validate_token(accessToken: str = Header(...)):
-    """Validate the user's token with an external API."""
-    response = requests.post(
-        f"{settings.api_base_url}{settings.token_validation_url}",
-        headers={"Authorization": f"Bearer {accessToken}"}
-    )
+async def validate_token(authorization: str = Header(...)):
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=400, detail="Invalid authorization format.")
     
-    if response.status_code != 200:
-        raise HTTPException(status_code=401, detail="Invalid access token")
+    token = authorization[len("Bearer "):]
+    validation_url = f"{settings.api_base_url}{settings.token_validation_url}"
+    headers = {"Authorization": f"Bearer {token}"}
     
-    return response.json()
+    response = requests.get(validation_url, headers=headers)
+    
+    if response.status_code == 401:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    elif response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Token validation failed")
+    
+    return token
