@@ -18,9 +18,8 @@ def get_presigned_url():
 
     return presigned_url_response.json()
 
-def upload_to_s3(presigned_url: str, file_path: str):
-    with open(file_path, "rb") as buffer:
-        upload_response = requests.put(presigned_url, data=buffer)
+def upload_to_s3(presigned_url: str, file):
+    upload_response = requests.put(presigned_url, data=file)
 
     if upload_response.status_code != 200:
         raise HTTPException(status_code=500, detail="Failed to upload video to S3")
