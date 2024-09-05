@@ -9,6 +9,6 @@ class Settings(BaseSettings):
     aws_api_base_url: str
 
     class Config:
-        env_file = ".env"
+        env_file = "env.list"
 
 settings = Settings()

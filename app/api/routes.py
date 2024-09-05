@@ -31,3 +31,7 @@ async def upload_video(
         "s3_filename": s3_filename,
         "transcode_job": transcode_job_data
     }
+
+@router.get("/")
+async def healthcheck():
+    return {"status": "healthy"}
