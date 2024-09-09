@@ -4,6 +4,7 @@ import os
 from app.dependencies.token_validation import validate_token
 from app.services.s3_upload import get_presigned_url, upload_to_s3, image_get_presigned_url
 from app.services.transcode import trigger_transcode_job
+from app.services.member_service import patch_member
 from app.core.config import settings
 
 router = APIRouter()
@@ -34,9 +35,15 @@ async def upload_video(
     }
 
 
-@router.post("/profiles/")
+@router.patch("/members/")
 async def update_member(
     file: UploadFile = File(...),  # 이미지 파일 업로드
+    token: str = Depends(validate_token),  # 로그인 토큰 확인
+    nickName: str = Form(...),  # 닉네임
+    instagramId: str = Form(...),  # 인스타그램 ID
+    height: float = Form(...),  # 키 (소수점 포함)
+    gender: str = Form(...),  # 성별
+    reach: float = Form(...)  # 리치(팔 길이, 소수점 포함)
 ):
     # Step 1: Get S3 presigned URL from external API for the image upload
     presigned_url_data = image_get_presigned_url()
@@ -46,10 +53,23 @@ async def update_member(
     # Step 2: Upload image to S3 using presigned URL
     file.file.seek(0)
     upload_to_s3(presigned_url, file.file)
+    
+    # Step 3: Process the member update
+    member_data = {
+        "nickName": nickName,
+        "instagramId": instagramId,
+        "height": height,
+        "gender": gender,
+        "reach": reach,
+        "profileImageUrl": f"{ settings.cdn_domain }/{ s3_filename }"
+    }
+
+    response = await patch_member(token, member_data)
 
     return {
         "message": "Member updated successfully",
-        "profileImageUrl": f"{ settings.cdn_domain }/{ s3_filename }"
+        "member_data": member_data,
+        "response": response
     }
 
 
