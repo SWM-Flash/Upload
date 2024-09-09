@@ -2,6 +2,22 @@ import requests
 from fastapi import HTTPException
 from app.core.config import settings
 
+def image_get_presigned_url():
+    print(f"S3 Presigned URL: {settings.s3_presigned_url}")
+    full_url = f"{settings.aws_api_base_url}{settings.image_s3_presigned_url}"
+    print(f"Requesting URL: {full_url}")
+
+    presigned_url_response = requests.get(
+        full_url
+    )
+    
+    print(presigned_url_response.json())
+
+    if presigned_url_response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Failed to obtain presigned URL")
+
+    return presigned_url_response.json()
+
 def get_presigned_url():
     print(f"S3 Presigned URL: {settings.s3_presigned_url}")
     full_url = f"{settings.aws_api_base_url}{settings.s3_presigned_url}"

@@ -4,9 +4,11 @@ class Settings(BaseSettings):
     api_base_url: str
     token_validation_url: str
     s3_presigned_url: str
+    image_s3_presigned_url: str
     transcode_url: str
     environment: str = "dev"
     aws_api_base_url: str
+    cdn_domain: str
 
     class Config:
         env_file = "env.list"
