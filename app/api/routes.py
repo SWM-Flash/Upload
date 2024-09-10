@@ -1,6 +1,7 @@
 from fastapi import APIRouter, File, UploadFile, Header, HTTPException, Depends, Form, Body
 import shutil
 import os
+from typing import Optional
 from app.dependencies.token_validation import validate_token
 from app.services.s3_upload import get_presigned_url, upload_to_s3, image_get_presigned_url
 from app.services.transcode import trigger_transcode_job
@@ -37,33 +38,37 @@ async def upload_video(
 
 @router.patch("/members/")
 async def update_member(
-    file: UploadFile = File(...),  # 이미지 파일 업로드
+    file: Optional[UploadFile] = File(None),  # 이미지 파일 업로드
     token: str = Depends(validate_token),  # 로그인 토큰 확인
     nickName: str = Form(...),  # 닉네임
-    instagramId: str = Form(...),  # 인스타그램 ID
-    height: float = Form(...),  # 키 (소수점 포함)
-    gender: str = Form(...),  # 성별
-    reach: float = Form(...)  # 리치(팔 길이, 소수점 포함)
+    instagramId: Optional[str] = Form(None),  # 인스타그램 ID
+    height: Optional[float] = Form(None),  # 키 (소수점 포함)
+    gender: Optional[str] = Form(None),  # 성별
+    reach: Optional[float] = Form(None)  # 리치(팔 길이, 소수점 포함)
 ):
-    # Step 1: Get S3 presigned URL from external API for the image upload
-    presigned_url_data = image_get_presigned_url()
-    presigned_url = presigned_url_data["upload_url"]
-    s3_filename = presigned_url_data["file_name"]
-    
-    # Step 2: Upload image to S3 using presigned URL
-    file.file.seek(0)
-    upload_to_s3(presigned_url, file.file)
-    
-    # Step 3: Process the member update
+    # Step 1: Initialize member data with optional values
     member_data = {
         "nickName": nickName,
         "instagramId": instagramId,
         "height": height,
         "gender": gender,
         "reach": reach,
-        "profileImageUrl": f"{ settings.cdn_domain }/{ s3_filename }"
     }
 
+    # Step 2: If a file is provided, get S3 presigned URL and upload the file
+    if file:
+        presigned_url_data = image_get_presigned_url()
+        presigned_url = presigned_url_data["upload_url"]
+        s3_filename = presigned_url_data["file_name"]
+        
+        # Upload image to S3 using presigned URL
+        file.file.seek(0)
+        upload_to_s3(presigned_url, file.file)
+        
+        # Add profile image URL to member data
+        member_data["profileImageUrl"] = f"{settings.cdn_domain}/{s3_filename}"
+
+    # Step 3: Send the member data to the API server
     response = await patch_member(token, member_data)
 
     return {
