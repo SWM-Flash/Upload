@@ -14,7 +14,7 @@ router = APIRouter()
 async def upload_video(
     file: UploadFile = File(...), 
     problemId: str = Form(...),
-    review: str = Form(...),
+    review: Optional[str] = Form(None),
     token: str = Depends(validate_token)
 ):
     # Step 2: Get S3 presigned URL from external API
