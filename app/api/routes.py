@@ -38,43 +38,19 @@ async def upload_video(
 
 @router.patch("/members/")
 async def update_member(
-    file: Optional[UploadFile] = File(None),  # 이미지 파일 업로드
-    token: str = Depends(validate_token),  # 로그인 토큰 확인
-    nickName: str = Form(...),  # 닉네임
-    instagramId: Optional[str] = Form(None),  # 인스타그램 ID
-    height: Optional[float] = Form(None),  # 키 (소수점 포함)
-    gender: Optional[str] = Form(None),  # 성별
-    reach: Optional[float] = Form(None)  # 리치(팔 길이, 소수점 포함)
+    file: Optional[UploadFile] = File(None)
 ):
-    # Step 1: Initialize member data with optional values
-    member_data = {
-        "nickName": nickName,
-        "instagramId": instagramId,
-        "height": height,
-        "gender": gender,
-        "reach": reach,
-    }
-
-    # Step 2: If a file is provided, get S3 presigned URL and upload the file
-    if file:
-        presigned_url_data = image_get_presigned_url()
-        presigned_url = presigned_url_data["upload_url"]
-        s3_filename = presigned_url_data["file_name"]
-        
-        # Upload image to S3 using presigned URL
-        file.file.seek(0)
-        upload_to_s3(presigned_url, file.file)
-        
-        # Add profile image URL to member data
-        member_data["profileImageUrl"] = f"{settings.cdn_domain}/{s3_filename}"
-
-    # Step 3: Send the member data to the API server
-    response = await patch_member(token, member_data)
+    presigned_url_data = image_get_presigned_url()
+    presigned_url = presigned_url_data["upload_url"]
+    s3_filename = presigned_url_data["file_name"]
+    
+    # Upload image to S3 using presigned URL
+    file.file.seek(0)
+    upload_to_s3(presigned_url, file.file)
 
     return {
         "message": "Member updated successfully",
-        "member_data": member_data,
-        "response": response
+        "profileImageUrl": f"{settings.cdn_domain}/{s3_filename}"
     }
 
 
