@@ -36,7 +36,7 @@ async def upload_video(
     }
 
 
-@router.patch("/members/")
+@router.post("/images/")
 async def update_member(
     file: Optional[UploadFile] = File(None)
 ):
