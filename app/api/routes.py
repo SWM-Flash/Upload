@@ -42,6 +42,42 @@ async def upload_video(
     }
 
 
+@router.post("/admin/upload/")
+async def upload_video(
+    file: UploadFile = File(...), 
+    problemId: str = Form(...),
+    nickName: str = Form(...),
+    instagramId: str = Form(...),
+    review: Optional[str] = Form(''),
+    token: str = Depends(validate_token)
+):
+    # Step 2: Get S3 presigned URL from external API
+    presigned_url_data = get_presigned_url()
+    presigned_url = presigned_url_data["upload_url"]
+    s3_filename = presigned_url_data["file_name"]
+    
+    # Step 3: Upload video to S3 using presigned URL
+    file.file.seek(0)
+    upload_to_s3(presigned_url, file.file)
+
+    # Step 4: Trigger transcode job
+    request_data = {
+        "video_name": s3_filename,
+        "problem_id": problemId,
+        "review": review,
+        "token": token,
+        "nickname": nickName,
+        "instagramId": instagramId
+    }
+    transcode_job_data = trigger_transcode_job(request_data)
+
+    return {
+        "filename": file.filename,
+        "s3_filename": s3_filename,
+        "transcode_job": transcode_job_data
+    }
+
+
 @router.post("/images/")
 async def update_member(
     file: Optional[UploadFile] = File(None)
