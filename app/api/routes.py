@@ -27,7 +27,13 @@ async def upload_video(
     upload_to_s3(presigned_url, file.file)
 
     # Step 4: Trigger transcode job
-    transcode_job_data = trigger_transcode_job(s3_filename, token, problemId, review)
+    request_data = {
+        "video_name": s3_filename,
+        "problem_id": problemId,
+        "review": review,
+        "token": token
+    }
+    transcode_job_data = trigger_transcode_job(request_data)
 
     return {
         "filename": file.filename,
