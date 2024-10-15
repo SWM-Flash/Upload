@@ -14,6 +14,7 @@ router = APIRouter()
 async def upload_video(
     file: UploadFile = File(...), 
     problemId: str = Form(...),
+    perceivedDifficulty: str = Form(...),
     review: Optional[str] = Form(''),
     token: str = Depends(validate_token)
 ):
@@ -30,6 +31,7 @@ async def upload_video(
     request_data = {
         "video_name": s3_filename,
         "problem_id": problemId,
+        "perceivedDifficulty": perceivedDifficulty,
         "review": review,
         "token": token
     }
@@ -64,6 +66,7 @@ async def upload_video(
     request_data = {
         "video_name": s3_filename,
         "problem_id": problemId,
+        "perceivedDifficulty": '보통',
         "review": review,
         "token": token,
         "nickname": nickName,
