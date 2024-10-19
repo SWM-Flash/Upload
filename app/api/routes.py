@@ -14,7 +14,7 @@ router = APIRouter()
 async def upload_video(
     file: UploadFile = File(...), 
     problemId: str = Form(...),
-    perceivedDifficulty: str = Form(...),
+    perceivedDifficulty: str = Form('보통'),
     review: Optional[str] = Form(''),
     token: str = Depends(validate_token)
 ):
