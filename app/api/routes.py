@@ -10,10 +10,12 @@ from app.core.config import settings
 
 router = APIRouter()
 
-@router.post("/upload/")
+@router.post("/videos/upload/")
 async def upload_video(
     file: UploadFile = File(...), 
     problemId: str = Form(...),
+    thumbnailImageUrl: str = Form(...),
+    solvedDate: str = Form(...),
     perceivedDifficulty: str = Form('보통'),
     review: Optional[str] = Form(''),
     token: str = Depends(validate_token)
@@ -32,6 +34,8 @@ async def upload_video(
         "video_name": s3_filename,
         "problem_id": problemId,
         "perceivedDifficulty": perceivedDifficulty,
+        "thumbnailImageUrl": thumbnailImageUrl,
+        "solvedDate": solvedDate,
         "review": review,
         "token": token
     }
@@ -43,11 +47,98 @@ async def upload_video(
         "transcode_job": transcode_job_data
     }
 
+@router.post("/videos/upload/new/")
+async def upload_video_with_problem(
+    file: UploadFile = File(...),
+    thumbnailImageUrl: str = Form(...),
+    gymId: str = Form(...),
+    sectorId: str = Form(...),
+    holdId: str = Form(...),
+    difficulty: str = Form(...),
+    perceivedDifficulty: str = Form('보통'),
+    solvedDate: str = Form(...),
+    review: Optional[str] = Form(''),
+    token: str = Depends(validate_token)
+):
+    # Step 2: Get S3 presigned URL from external API
+    presigned_url_data = get_presigned_url()
+    presigned_url = presigned_url_data["upload_url"]
+    s3_filename = presigned_url_data["file_name"]
+    
+    # Step 3: Upload video to S3 using presigned URL
+    file.file.seek(0)
+    upload_to_s3(presigned_url, file.file)
+
+    # Step 4: Trigger transcode job
+    request_data = {
+        "video_name": s3_filename,
+        "thumbnailImageUrl": thumbnailImageUrl,
+        "gymId": gymId,
+        "sectorId": sectorId,
+        "holdId": holdId,
+        "difficulty": difficulty,
+        "solvedDate": solvedDate,
+        "perceivedDifficulty": perceivedDifficulty,
+        "review": review,
+        "token": token
+    }
+    transcode_job_data = trigger_transcode_job(request_data)
+
+    return {
+        "filename": file.filename,
+        "s3_filename": s3_filename,
+        "transcode_job": transcode_job_data
+    }
 
 @router.post("/admin/upload/")
 async def upload_video(
     file: UploadFile = File(...), 
     problemId: str = Form(...),
+    nickName: str = Form(...),
+    instagramId: str = Form(...),
+    review: Optional[str] = Form(''),
+    thumbnailImageUrl: str = Form(...),
+    solvedDate: str = Form(...),
+    token: str = Depends(validate_token)
+):
+    # Step 2: Get S3 presigned URL from external API
+    presigned_url_data = get_presigned_url()
+    presigned_url = presigned_url_data["upload_url"]
+    s3_filename = presigned_url_data["file_name"]
+    
+    # Step 3: Upload video to S3 using presigned URL
+    file.file.seek(0)
+    upload_to_s3(presigned_url, file.file)
+
+    # Step 4: Trigger transcode job
+    request_data = {
+        "video_name": s3_filename,
+        "problem_id": problemId,
+        "perceivedDifficulty": '보통',
+        "thumbnailImageUrl": thumbnailImageUrl,
+        "solvedDate": solvedDate,
+        "review": review,
+        "token": token,
+        "nickname": nickName,
+        "instagramId": instagramId
+    }
+    transcode_job_data = trigger_transcode_job(request_data)
+
+    return {
+        "filename": file.filename,
+        "s3_filename": s3_filename,
+        "transcode_job": transcode_job_data
+    }
+
+@router.post("/admin/upload/new/")
+async def upload_video(
+    file: UploadFile = File(...),
+    gymId: str = Form(...),
+    sectorId: str = Form(...),
+    holdId: str = Form(...),
+    difficulty: str = Form(...),
+    thumbnailImageUrl: str = Form(...),
+    solvedDate: str = Form(...),
     nickName: str = Form(...),
     instagramId: str = Form(...),
     review: Optional[str] = Form(''),
@@ -65,12 +156,17 @@ async def upload_video(
     # Step 4: Trigger transcode job
     request_data = {
         "video_name": s3_filename,
-        "problem_id": problemId,
+        "gymId": gymId,
+        "sectorId": sectorId,
+        "holdId": holdId,
+        "difficulty": difficulty,
         "perceivedDifficulty": '보통',
         "review": review,
         "token": token,
         "nickname": nickName,
-        "instagramId": instagramId
+        "instagramId": instagramId,
+        "solvedDate": solvedDate,
+        "thumbnailImageUrl": thumbnailImageUrl
     }
     transcode_job_data = trigger_transcode_job(request_data)
 
@@ -79,6 +175,7 @@ async def upload_video(
         "s3_filename": s3_filename,
         "transcode_job": transcode_job_data
     }
+
 
 
 @router.post("/images/")
