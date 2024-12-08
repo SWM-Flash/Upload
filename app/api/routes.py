@@ -51,9 +51,9 @@ async def upload_video(
 async def upload_video_with_problem(
     file: UploadFile = File(...),
     thumbnailImageUrl: str = Form(...),
-    gymId: str = Form(...),
-    sectorId: str = Form(...),
-    holdId: str = Form(...),
+    gymId: int = Form(...),
+    sectorId: int = Form(...),
+    holdId: int = Form(...),
     difficulty: str = Form(...),
     perceivedDifficulty: str = Form('보통'),
     solvedDate: str = Form(...),
@@ -133,9 +133,9 @@ async def upload_video(
 @router.post("/admin/upload/new/")
 async def upload_video(
     file: UploadFile = File(...),
-    gymId: str = Form(...),
-    sectorId: str = Form(...),
-    holdId: str = Form(...),
+    gymId: int = Form(...),
+    sectorId: int = Form(...),
+    holdId: int = Form(...),
     difficulty: str = Form(...),
     thumbnailImageUrl: str = Form(...),
     solvedDate: str = Form(...),
